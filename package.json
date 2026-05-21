@@ -1,0 +1,16 @@
+{
+  "name": "discord-gen-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord générateur avec panneau web",
+  "main": "bot.js",
+  "scripts": {
+    "bot": "node bot.js",
+    "panel": "node server.js",
+    "start": "node -e \"require('./bot.js'); require('./server.js');\""
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  }
+}
