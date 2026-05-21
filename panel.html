@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEN PANEL</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--border:#2a2a3a;--accent:#7c3aed;--accent2:#4f46e5;--green:#10b981;--red:#ef4444;--orange:#f59e0b;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0%,#2d1b69 0%,#0a0a0f 60%)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:400px;position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo .icon{font-size:48px;display:block;margin-bottom:8px}
+.login-logo h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-logo p{color:var(--muted);font-size:13px;margin-top:4px;font-family:var(--mono)}
+
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.form-group input,.form-group textarea,.form-group select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--mono);font-size:13px;transition:border-color .2s;outline:none}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.15)}
+.form-group textarea{resize:vertical;min-height:90px}
+.form-group select option{background:var(--surface2)}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;border-radius:8px;font-family:var(--sans);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;border:none;outline:none;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;width:100%;justify-content:center;padding:13px}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.btn-warning{background:var(--orange);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px}
+.btn:hover:not(.btn-primary){opacity:.85}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;font-size:13px;color:var(--red);margin-bottom:16px;display:none;font-family:var(--mono)}
+
+#app{display:none}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-brand{padding:0 20px 24px;border-bottom:1px solid var(--border)}
+.sidebar-brand h2{font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar-brand span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sidebar-nav{padding:16px 12px;flex:1}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0 8px;margin:16px 0 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;transition:all .2s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(124,58,237,.15);color:#a78bfa}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--border)}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.main{padding:28px;overflow-y:auto}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.page-header{margin-bottom:28px}
+.page-header h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.page-header p{color:var(--muted);font-size:13px;margin-top:4px;font-family:var(--mono)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card:hover{border-color:var(--accent)}
+.stat-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.stat-value{font-size:32px;font-weight:800;font-family:var(--mono);background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-icon{position:absolute;top:18px;right:18px;font-size:22px;opacity:.5}
+
+.table-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.table-header h3{font-size:14px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 18px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
+td{padding:13px 18px;font-size:13px;border-bottom:1px solid rgba(42,42,58,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.badge-green{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge-orange{background:rgba(245,158,11,.15);color:var(--orange);border:1px solid rgba(245,158,11,.3)}
+.badge-purple{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3)}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.key-mono{font-family:var(--mono);font-size:11px;background:var(--surface2);padding:3px 7px;border-radius:5px;border:1px solid var(--border);letter-spacing:1px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:18px}
+.card h3{font-size:14px;font-weight:700;margin-bottom:14px}
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:20px}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;transition:all .2s}
+.cat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.cat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cat-card-name{font-size:15px;font-weight:700}
+.cat-count{font-family:var(--mono);font-size:22px;font-weight:700;margin-bottom:12px}
+.cat-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* BUTTON PANEL EDITOR */
+.panel-list{display:flex;flex-direction:column;gap:12px}
+.panel-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.panel-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-item-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel-actions{display:flex;gap:8px}
+
+.btn-builder{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.btn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.btn-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn-item-label{font-weight:700;font-size:13px;flex:1;min-width:80px}
+.btn-item-cat{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.btn-preview{padding:6px 14px;border-radius:6px;font-weight:700;font-size:12px;border:none;cursor:default}
+.btn-preview.Primary{background:#5865F2;color:#fff}
+.btn-preview.Secondary{background:#4e5058;color:#fff}
+.btn-preview.Success{background:#57F287;color:#000}
+.btn-preview.Danger{background:#ED4245;color:#fff}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex;animation:fadeIn .15s ease}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:540px;position:relative;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:18px;font-weight:800;margin-bottom:18px}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.modal-close:hover{color:var(--text)}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;min-width:240px;animation:slideIn .2s ease;display:flex;align-items:center;gap:9px}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid #a78bfa}
+
+.log-list{display:flex;flex-direction:column;gap:5px;max-height:480px;overflow-y:auto}
+.log-item{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 13px;display:grid;grid-template-columns:130px 110px 1fr;gap:10px;align-items:center;font-size:11px;font-family:var(--mono)}
+.log-time{color:var(--muted)}
+.log-detail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.info-box{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:13px 17px;font-size:13px;color:#a78bfa;margin-bottom:18px}
+.divider{height:1px;background:var(--border);margin:18px 0}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.two-col,.three-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="icon">⚡</span>
+      <h1>GEN PANEL</h1>
+      <p>// Admin Only</p>
+    </div>
+    <div id="login-error" class="error-msg">❌ Mot de passe incorrect</div>
+    <div class="form-group">
+      <label>Mot de passe admin</label>
+      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <button class="btn btn-primary" onclick="login()">🔓 Connexion</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <h2>⚡ GEN PANEL</h2>
+        <span>// Admin Only</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Navigation</div>
+        <div class="nav-item active" onclick="navigate('dashboard',this)"><span>📊</span> Dashboard</div>
+        <div class="nav-item" onclick="navigate('stock',this)"><span>📦</span> Stock</div>
+        <div class="nav-item" onclick="navigate('services',this)"><span>🛠️</span> Services</div>
+        <div class="nav-item" onclick="navigate('buttons',this)"><span>🎮</span> Boutons</div>
+        <div class="nav-item" onclick="navigate('licenses',this)"><span>🔑</span> Licences</div>
+        <div class="nav-item" onclick="navigate('logs',this)"><span>📋</span> Logs</div>
+        <div class="nav-item" onclick="navigate('settings',this)"><span>⚙️</span> Paramètres</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px"><span class="status-dot"></span> Bot en ligne</div>
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="logout()">🚪 Déconnexion</button>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header"><h1>📊 Dashboard</h1><p>// Vue d'ensemble</p></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Catégories</div><div class="stat-value" id="stat-cats">—</div><div class="stat-icon">🗂️</div></div>
+          <div class="stat-card"><div class="stat-label">Items en stock</div><div class="stat-value" id="stat-items">—</div><div class="stat-icon">📦</div></div>
+          <div class="stat-card"><div class="stat-label">Licences actives</div><div class="stat-value" id="stat-licenses">—</div><div class="stat-icon">🔑</div></div>
+          <div class="stat-card"><div class="stat-label">Générations today</div><div class="stat-value" id="stat-gen">—</div><div class="stat-icon">⚡</div></div>
+          <div class="stat-card"><div class="stat-label">Licences VIP</div><div class="stat-value" id="stat-vip">—</div><div class="stat-icon">👑</div></div>
+        </div>
+        <div class="table-container">
+          <div class="table-header"><h3>⏱️ Activité récente</h3><button class="btn btn-secondary btn-sm" onclick="loadStats();loadRecentLogs()">🔄</button></div>
+          <div id="recent-logs" style="padding:16px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- STOCK -->
+      <div class="page" id="page-stock">
+        <div class="page-header"><h1>📦 Stock</h1><p>// Gère tes catégories et items</p></div>
+        <div class="card">
+          <h3>➕ Nouvelle catégorie</h3>
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1;min-width:160px"><label>Nom</label><input type="text" id="new-cat-name" placeholder="Netflix Premium"></div>
+            <button class="btn btn-success" onclick="createCategory()">Créer</button>
+          </div>
+        </div>
+        <div id="cat-grid" class="cat-grid">Chargement...</div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="page" id="page-services">
+        <div class="page-header"><h1>🛠️ Services</h1><p>// Configure type, durée, cooldown et limite par catégorie</p></div>
+        <div class="info-box">💡 Chaque catégorie de stock peut avoir un service configuré : type (VIP / Gratuit), durée (À vie / Mensuel), service spécial (Netflix, Spotify…), cooldown entre génération et limite journalière.</div>
+        <div class="card">
+          <h3>➕ Configurer / Modifier un service</h3>
+          <div class="two-col">
+            <div class="form-group"><label>Catégorie de stock</label>
+              <select id="svc-category"><option value="">-- Choisir --</option></select>
+            </div>
+            <div class="form-group"><label>Nom du service (ex: Netflix, Spotify)</label>
+              <input type="text" id="svc-special" placeholder="Netflix, Spotify, Prime...">
+            </div>
+          </div>
+          <div class="three-col">
+            <div class="form-group"><label>Type</label>
+              <select id="svc-type">
+                <option value="Gratuit">🆓 Gratuit</option>
+                <option value="VIP">👑 VIP</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Durée</label>
+              <select id="svc-duree">
+                <option value="Mensuel">📅 Mensuel</option>
+                <option value="À vie">♾️ À vie</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Catégorie affichée</label>
+              <input type="text" id="svc-catname" placeholder="Streaming, Musique...">
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="form-group"><label>⏱️ Cooldown entre générations (secondes, 0 = désactivé)</label>
+              <input type="number" id="svc-cooldown" placeholder="3600" min="0" value="0">
+            </div>
+            <div class="form-group"><label>📅 Limite de générations par jour (0 = illimité)</label>
+              <input type="number" id="svc-maxperday" placeholder="1" min="0" value="0">
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="saveService()">💾 Sauvegarder le service</button>
+        </div>
+        <div class="table-container">
+          <div class="table-header"><h3>📋 Services configurés</h3><button class="btn btn-secondary btn-sm" onclick="loadServices()">🔄</button></div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Catégorie</th><th>Service</th><th>Type</th><th>Durée</th><th>Cooldown</th><th>Max/jour</th><th>Actions</th></tr></thead>
+              <tbody id="services-tbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">Chargement...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOUTONS -->
+      <div class="page" id="page-buttons">
+        <div class="page-header"><h1>🎮 Boutons Discord</h1><p>// Crée des panneaux de boutons custom</p></div>
+        <div class="info-box">💡 Crée un panel, ajoute des boutons, puis utilise <strong>/genpanel [nom]</strong> dans Discord pour l'envoyer. Chaque bouton peut avoir un emoji, un nom et une couleur personnalisée. Les images s'affichent dans l'embed au-dessus des boutons.</div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <button class="btn btn-success" onclick="openNewPanelModal()">➕ Nouveau panel</button>
+        </div>
+        <div id="panels-list" class="panel-list">Chargement...</div>
+      </div>
+
+      <!-- LICENCES -->
+      <div class="page" id="page-licenses">
+        <div class="page-header"><h1>🔑 Licences</h1><p>// Contrôle l'accès de tes clients</p></div>
+        <div class="card">
+          <h3>➕ Créer une licence</h3>
+          <div class="three-col" style="align-items:flex-end">
+            <div class="form-group" style="margin:0"><label>Discord User ID</label><input type="text" id="new-lic-userid" placeholder="123456789..."></div>
+            <div class="form-group" style="margin:0"><label>Pseudo (optionnel)</label><input type="text" id="new-lic-username" placeholder="user#0001"></div>
+            <div class="form-group" style="margin:0"><label>Durée en jours (0=∞)</label><input type="number" id="new-lic-days" placeholder="30" min="0"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="new-lic-vip" style="width:auto;accent-color:var(--accent)">
+              <span style="font-size:13px;font-weight:700">👑 Licence VIP (accès aux services VIP)</span>
+            </label>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-success" onclick="createLicense()">🔑 Générer la licence</button>
+            <span id="new-key-display" style="font-family:var(--mono);font-size:13px;color:#a78bfa"></span>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin-top:10px;font-family:var(--mono)">💡 Mode développeur Discord requis pour copier l'ID : Paramètres → Avancé → Mode développeur</p>
+        </div>
+        <div class="table-container">
+          <div class="table-header"><h3>📋 Toutes les licences</h3><button class="btn btn-secondary btn-sm" onclick="loadLicenses()">🔄</button></div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Clé</th><th>Utilisateur</th><th>Type</th><th>Statut</th><th>Expiration</th><th>Actions</th></tr></thead>
+              <tbody id="licenses-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Chargement...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="page" id="page-logs">
+        <div class="page-header"><h1>📋 Logs</h1><p>// Historique des actions</p></div>
+        <div class="table-container">
+          <div class="table-header"><h3>🔍 Journal</h3><button class="btn btn-secondary btn-sm" onclick="loadLogs()">🔄</button></div>
+          <div id="logs-list" style="padding:16px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-header"><h1>⚙️ Paramètres</h1><p>// Configuration</p></div>
+        <div class="card">
+          <h3>📢 Channel de notification de stock</h3>
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1"><label>ID du channel Discord</label><input type="text" id="stock-channel-id" placeholder="123456789012345678"></div>
+            <button class="btn btn-success" onclick="saveConfig()">💾 Sauvegarder</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>🤖 Commandes Discord</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px"><strong style="color:#a78bfa">/genpanel [nom]</strong> <span style="color:var(--muted)">— Envoie un panel de boutons dans le channel</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px"><strong style="color:#a78bfa">/addlicense @user 30</strong> <span style="color:var(--muted)">— Licence 30 jours</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px"><strong style="color:#a78bfa">/gen</strong> <span style="color:var(--muted)">— Générer un item (clients)</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px"><strong style="color:#a78bfa">/mylicense</strong> <span style="color:var(--muted)">— Voir sa licence</span></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL STOCK -->
+<div class="modal-overlay" id="modal-stock">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-stock')">✕</button>
+    <h2>📦 Ajouter du stock</h2>
+    <input type="hidden" id="modal-cat-name">
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Catégorie : <strong id="modal-cat-label" style="color:#a78bfa"></strong></p>
+    <div class="form-group"><label>Items (un par ligne)</label><textarea id="modal-items" rows="8" placeholder="item1&#10;item2&#10;item3"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-stock')">Annuler</button>
+      <button class="btn btn-success" onclick="addStock()">✅ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VOIR ITEMS -->
+<div class="modal-overlay" id="modal-view">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-view')">✕</button>
+    <h2 id="modal-view-title">📋 Items</h2>
+    <div id="modal-view-content" style="max-height:380px;overflow-y:auto;font-family:var(--mono);font-size:12px;background:var(--surface2);border-radius:8px;padding:14px;border:1px solid var(--border)"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-view')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- MODAL NOUVEAU PANEL -->
+<div class="modal-overlay" id="modal-new-panel">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-new-panel')">✕</button>
+    <h2>🎮 Nouveau panel</h2>
+    <div class="form-group"><label>Nom du panel (pour /genpanel)</label><input type="text" id="np-name" placeholder="boutique"></div>
+    <div class="two-col">
+      <div class="form-group"><label>Titre de l'embed</label><input type="text" id="np-title" placeholder="⚡ Générateur"></div>
+      <div class="form-group"><label>Couleur (hex)</label><input type="color" id="np-color" value="#5865F2" style="height:42px;padding:4px 8px;cursor:pointer"></div>
+    </div>
+    <div class="form-group"><label>Description de l'embed</label><textarea id="np-desc" rows="3" placeholder="Clique sur un bouton pour générer..."></textarea></div>
+    <div class="two-col">
+      <div class="form-group"><label>🖼️ URL Image (grande)</label><input type="text" id="np-image" placeholder="https://..."></div>
+      <div class="form-group"><label>🖼️ URL Miniature (coin)</label><input type="text" id="np-thumb" placeholder="https://..."></div>
+    </div>
+    <div class="form-group"><label>Texte du footer</label><input type="text" id="np-footer" placeholder="Mon générateur • 2024"></div>
+    <div class="form-group" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="np-showstock" style="width:auto;accent-color:var(--accent)">
+      <label for="np-showstock" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Afficher le stock dans l'embed</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-panel')">Annuler</button>
+      <button class="btn btn-success" onclick="createPanel()">✅ Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER BOUTON -->
+<div class="modal-overlay" id="modal-add-btn">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-add-btn')">✕</button>
+    <h2>➕ Ajouter un bouton</h2>
+    <input type="hidden" id="ab-panel-name">
+    <div class="two-col">
+      <div class="form-group"><label>Emoji</label><input type="text" id="ab-emoji" placeholder="🎁 ou :custom:"></div>
+      <div class="form-group"><label>Label du bouton</label><input type="text" id="ab-label" placeholder="Netflix"></div>
+    </div>
+    <div class="form-group"><label>Catégorie de stock</label>
+      <select id="ab-category"><option value="">-- Choisir --</option></select>
+    </div>
+    <div class="form-group"><label>Couleur du bouton</label>
+      <select id="ab-style">
+        <option value="Primary">🔵 Bleu (Primary)</option>
+        <option value="Secondary">⚫ Gris (Secondary)</option>
+        <option value="Success">🟢 Vert (Success)</option>
+        <option value="Danger">🔴 Rouge (Danger)</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="ab-showcount" style="width:auto;accent-color:var(--accent)" checked>
+        <label for="ab-showcount" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Afficher le nombre de stock sur le bouton</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="ab-disable-empty" style="width:auto;accent-color:var(--accent)" checked>
+        <label for="ab-disable-empty" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Désactiver le bouton si stock vide</label>
+      </div>
+    </div>
+    <div id="btn-preview-container" style="margin-bottom:14px">
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Aperçu</label>
+      <button class="btn-preview Primary" id="btn-live-preview">🎁 Bouton (42)</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-btn')">Annuler</button>
+      <button class="btn btn-success" onclick="addButtonToPanel()">➕ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = '';
+let currentPanels = [];
+
+// ===== AUTH =====
+async function login() {
+  const pw = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  try {
+    const res = await fetch(`${API}/api/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pw }) });
+    if (res.ok) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      err.style.display = 'none';
+      initApp();
+    } else { err.style.display = 'block'; err.textContent = '❌ Mot de passe incorrect'; }
+  } catch(e) { err.style.display = 'block'; err.textContent = '❌ Erreur de connexion'; }
+}
+async function logout() { await fetch(`${API}/api/logout`, { method:'POST' }); location.reload(); }
+
+function navigate(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  if (el) el.classList.add('active');
+  if (page === 'dashboard') { loadStats(); loadRecentLogs(); }
+  if (page === 'stock') loadStock();
+  if (page === 'services') loadServices();
+  if (page === 'buttons') loadPanels();
+  if (page === 'licenses') loadLicenses();
+  if (page === 'logs') loadLogs();
+  if (page === 'settings') loadConfig();
+}
+function initApp() { loadStats(); loadRecentLogs(); }
+
+// ===== STATS =====
+async function loadStats() {
+  const data = await fetch(`${API}/api/stats`).then(r => r.json()).catch(() => ({}));
+  document.getElementById('stat-cats').textContent = data.totalCategories ?? '—';
+  document.getElementById('stat-items').textContent = data.totalItems ?? '—';
+  document.getElementById('stat-licenses').textContent = data.activeLicenses ?? '—';
+  document.getElementById('stat-gen').textContent = data.genToday ?? '—';
+  document.getElementById('stat-vip').textContent = data.vipLicenses ?? '—';
+}
+
+// ===== LOGS =====
+function getActionBadge(a) {
+  const m = { GEN:['badge-green','⚡ GEN'], ADD_STOCK:['badge-purple','📦 STOCK'], ADD_LICENSE:['badge-orange','🔑 LIC'], REVOKE_LICENSE:['badge-red','🔒 REVOKE'], CREATE_CATEGORY:['badge-blue','🗂️ CAT'], DELETE_CATEGORY:['badge-red','🗑️ DEL'], CLEAR_STOCK:['badge-red','🗑️ CLEAR'], ACTIVATE_LICENSE:['badge-green','✅ ACTIV'], DELETE_LICENSE:['badge-red','🗑️ DEL LIC'] };
+  return m[a] || ['badge-purple', a];
+}
+function renderLogs(logs, tid) {
+  const el = document.getElementById(tid);
+  if (!logs.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:28px">Aucun log</p>'; return; }
+  el.innerHTML = `<div class="log-list">${logs.map(l => { const [c,lb] = getActionBadge(l.action); return `<div class="log-item"><span class="log-time">${new Date(l.timestamp).toLocaleString('fr-FR')}</span><span><span class="badge ${c}">${lb}</span></span><span class="log-detail">${l.details||''}</span></div>`; }).join('')}</div>`;
+}
+async function loadLogs() { const logs = await fetch(`${API}/api/logs`).then(r => r.json()); renderLogs(logs, 'logs-list'); }
+async function loadRecentLogs() { const logs = await fetch(`${API}/api/logs`).then(r => r.json()); renderLogs(logs.slice(0,8), 'recent-logs'); }
+
+// ===== STOCK =====
+async function loadStock() {
+  const data = await fetch(`${API}/api/stock`).then(r => r.json());
+  const grid = document.getElementById('cat-grid');
+  const cats = Object.keys(data);
+  if (!cats.length) { grid.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">Aucune catégorie. Crée-en une !</p>'; return; }
+  grid.innerHTML = cats.map(cat => {
+    const count = data[cat].length;
+    const col = count === 0 ? 'var(--red)' : count < 5 ? 'var(--orange)' : '#a78bfa';
+    return `<div class="cat-card">
+      <div class="cat-card-header"><span class="cat-card-name">📂 ${cat}</span><button class="btn btn-danger btn-xs" onclick="deleteCategory('${cat}')">🗑️</button></div>
+      <div class="cat-count" style="color:${col}">${count} <span style="font-size:13px;color:var(--muted);font-weight:400">items</span></div>
+      <div class="cat-actions">
+        <button class="btn btn-success btn-sm" onclick="openStockModal('${cat}')">➕ Stock</button>
+        <button class="btn btn-secondary btn-sm" onclick="viewItems('${cat}',${JSON.stringify(data[cat]).replace(/"/g,'&quot;')})">👁️</button>
+        <button class="btn btn-danger btn-xs" onclick="clearStock('${cat}')">Vider</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function createCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) return toast('Nom requis', 'error');
+  const res = await fetch(`${API}/api/stock/category`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+  const data = await res.json();
+  if (data.success) { toast(`"${name}" créée !`, 'success'); document.getElementById('new-cat-name').value=''; loadStock(); }
+  else toast(data.error, 'error');
+}
+async function deleteCategory(name) {
+  if (!confirm(`Supprimer "${name}" ?`)) return;
+  await fetch(`${API}/api/stock/category/${name}`, { method:'DELETE' });
+  toast('Supprimée', 'success'); loadStock();
+}
+function openStockModal(cat) {
+  document.getElementById('modal-cat-name').value = cat;
+  document.getElementById('modal-cat-label').textContent = cat;
+  document.getElementById('modal-items').value = '';
+  document.getElementById('modal-stock').classList.add('open');
+}
+function viewItems(cat, items) {
+  document.getElementById('modal-view-title').textContent = `📋 ${cat} (${items.length})`;
+  const c = document.getElementById('modal-view-content');
+  c.innerHTML = items.length ? items.map((item,i) => `<div style="padding:3px 0;border-bottom:1px solid var(--border)">${i+1}. ${item}</div>`).join('') : '<p style="color:var(--muted)">Vide</p>';
+  document.getElementById('modal-view').classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+async function addStock() {
+  const cat = document.getElementById('modal-cat-name').value;
+  const items = document.getElementById('modal-items').value;
+  if (!items.trim()) return toast('Aucun item', 'error');
+  const res = await fetch(`${API}/api/stock/${cat}/items`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items }) });
+  const data = await res.json();
+  if (data.success) { toast(`${data.added} items ajoutés ! Total: ${data.total}`, 'success'); closeModal('modal-stock'); loadStock(); }
+  else toast(data.error, 'error');
+}
+async function clearStock(cat) {
+  if (!confirm(`Vider "${cat}" ?`)) return;
+  await fetch(`${API}/api/stock/${cat}/items`, { method:'DELETE' });
+  toast('Vidé', 'success'); loadStock();
+}
+
+// ===== SERVICES =====
+async function loadServices() {
+  // Remplir le select catégorie
+  const stockData = await fetch(`${API}/api/stock`).then(r => r.json()).catch(() => ({}));
+  const sel = document.getElementById('svc-category');
+  sel.innerHTML = '<option value="">-- Choisir --</option>' + Object.keys(stockData).map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // Charger les services configurés
+  const services = await fetch(`${API}/api/services`).then(r => r.json()).catch(() => []);
+  const tbody = document.getElementById('services-tbody');
+  if (!services.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">Aucun service configuré</td></tr>';
+    return;
+  }
+  tbody.innerHTML = services.map(s => {
+    const typeBadge = s.type === 'VIP'
+      ? '<span class="badge badge-orange">👑 VIP</span>'
+      : '<span class="badge badge-blue">🆓 Gratuit</span>';
+    const dureeBadge = s.duree === 'À vie'
+      ? '<span class="badge badge-purple">♾️ À vie</span>'
+      : '<span class="badge badge-green">📅 Mensuel</span>';
+    const cooldownStr = s.cooldown > 0 ? formatSec(s.cooldown) : '<span style="color:var(--muted)">Désactivé</span>';
+    const maxStr = s.maxPerDay > 0 ? `${s.maxPerDay}/jour` : '<span style="color:var(--muted)">Illimité</span>';
+    return `<tr>
+      <td><strong>${s.category}</strong>${s.categorieName ? `<br><span style="color:var(--muted);font-size:11px">${s.categorieName}</span>` : ''}</td>
+      <td>${s.special ? `<strong>${s.special}</strong>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${typeBadge}</td>
+      <td>${dureeBadge}</td>
+      <td style="font-family:var(--mono);font-size:12px">${cooldownStr}</td>
+      <td style="font-family:var(--mono);font-size:12px">${maxStr}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-blue btn-xs" onclick="editService(${JSON.stringify(s).replace(/"/g,'&quot;')})">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteService('${s.category}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function formatSec(sec) {
+  sec = parseInt(sec);
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${Math.floor(sec/60)}m ${sec%60}s`;
+  return `${Math.floor(sec/3600)}h ${Math.floor((sec%3600)/60)}m`;
+}
+
+function editService(s) {
+  document.getElementById('svc-category').value = s.category;
+  document.getElementById('svc-special').value = s.special || '';
+  document.getElementById('svc-type').value = s.type || 'Gratuit';
+  document.getElementById('svc-duree').value = s.duree || 'Mensuel';
+  document.getElementById('svc-catname').value = s.categorieName || '';
+  document.getElementById('svc-cooldown').value = s.cooldown || 0;
+  document.getElementById('svc-maxperday').value = s.maxPerDay || 0;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Service chargé pour modification', 'info');
+}
+
+async function saveService() {
+  const category = document.getElementById('svc-category').value;
+  if (!category) return toast('Catégorie requise', 'error');
+  const payload = {
+    category,
+    special: document.getElementById('svc-special').value.trim(),
+    type: document.getElementById('svc-type').value,
+    duree: document.getElementById('svc-duree').value,
+    categorieName: document.getElementById('svc-catname').value.trim(),
+    cooldown: parseInt(document.getElementById('svc-cooldown').value) || 0,
+    maxPerDay: parseInt(document.getElementById('svc-maxperday').value) || 0,
+  };
+  const res = await fetch(`${API}/api/services`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const data = await res.json();
+  if (data.success) { toast(`✅ Service "${category}" sauvegardé !`, 'success'); loadServices(); }
+  else toast(data.error || 'Erreur', 'error');
+}
+
+async function deleteService(category) {
+  if (!confirm(`Supprimer le service "${category}" ?`)) return;
+  await fetch(`${API}/api/services/${category}`, { method: 'DELETE' });
+  toast('Service supprimé', 'success'); loadServices();
+}
+
+// ===== PANELS / BOUTONS =====
+async function loadPanels() {
+  const data = await fetch(`${API}/api/panels`).then(r => r.json()).catch(() => ({ panels: [] }));
+  currentPanels = data.panels || [];
+  renderPanels();
+}
+
+function renderPanels() {
+  const el = document.getElementById('panels-list');
+  if (!currentPanels.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:48px;background:var(--surface);border:1px dashed var(--border);border-radius:12px">Aucun panel. Crée-en un !</div>';
+    return;
+  }
+  el.innerHTML = currentPanels.map((panel, pi) => {
+    const btns = panel.buttons || [];
+    return `<div class="panel-item">
+      <div class="panel-item-header">
+        <div class="panel-item-name">
+          <span style="background:rgba(124,58,237,.15);color:#a78bfa;padding:4px 10px;border-radius:20px;font-size:12px;font-family:var(--mono)">${panel.name}</span>
+          <span style="font-size:15px">${panel.title || 'Sans titre'}</span>
+          ${panel.imageUrl ? `<span class="badge badge-blue">🖼️ Image</span>` : ''}
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-blue btn-sm" onclick="openAddBtnModal('${panel.name}')">➕ Bouton</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePanel('${panel.name}')">🗑️</button>
+        </div>
+      </div>
+      ${panel.description ? `<p style="color:var(--muted);font-size:13px;margin-bottom:12px">${panel.description}</p>` : ''}
+      ${panel.imageUrl ? `<div style="margin-bottom:12px"><img src="${panel.imageUrl}" style="max-height:80px;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'"></div>` : ''}
+      <div class="btn-builder">
+        ${btns.length === 0 ? `<p style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Aucun bouton. Clique sur "➕ Bouton" pour en ajouter.</p>` : `
+        <div class="btn-list">${btns.map((btn, bi) => `
+          <div class="btn-item">
+            <button class="btn-preview ${btn.style||'Primary'}">${btn.emoji||''} ${btn.label}${btn.showCount ? ' (N)' : ''}</button>
+            <span class="btn-item-cat">→ ${btn.category}</span>
+            <div style="margin-left:auto;display:flex;gap:5px">
+              <button class="btn btn-danger btn-xs" onclick="removeBtn('${panel.name}',${bi})">✕</button>
+            </div>
+          </div>`).join('')}
+        </div>`}
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)">📢 Envoyer dans Discord : <strong>/genpanel ${panel.name}</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNewPanelModal() {
+  document.getElementById('np-name').value = '';
+  document.getElementById('np-title').value = '';
+  document.getElementById('np-desc').value = '';
+  document.getElementById('np-image').value = '';
+  document.getElementById('np-thumb').value = '';
+  document.getElementById('np-footer').value = '';
+  document.getElementById('np-color').value = '#5865F2';
+  document.getElementById('np-showstock').checked = false;
+  document.getElementById('modal-new-panel').classList.add('open');
+}
+
+async function createPanel() {
+  const name = document.getElementById('np-name').value.trim().replace(/\s+/g,'-').toLowerCase();
+  if (!name) return toast('Nom requis', 'error');
+  const panel = {
+    name,
+    title: document.getElementById('np-title').value || '⚡ Générateur',
+    description: document.getElementById('np-desc').value || 'Clique sur un bouton pour générer.\n> 🔑 Licence requise.',
+    imageUrl: document.getElementById('np-image').value.trim() || null,
+    thumbnailUrl: document.getElementById('np-thumb').value.trim() || null,
+    footerText: document.getElementById('np-footer').value.trim() || null,
+    color: document.getElementById('np-color').value,
+    showStock: document.getElementById('np-showstock').checked,
+    buttons: [],
+  };
+  const res = await fetch(`${API}/api/panels`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(panel) });
+  const data = await res.json();
+  if (data.success) { toast(`Panel "${name}" créé !`, 'success'); closeModal('modal-new-panel'); loadPanels(); }
+  else toast(data.error || 'Erreur', 'error');
+}
+
+async function deletePanel(name) {
+  if (!confirm(`Supprimer le panel "${name}" ?`)) return;
+  await fetch(`${API}/api/panels/${name}`, { method:'DELETE' });
+  toast('Panel supprimé', 'success'); loadPanels();
+}
+
+async function openAddBtnModal(panelName) {
+  document.getElementById('ab-panel-name').value = panelName;
+  document.getElementById('ab-emoji').value = '';
+  document.getElementById('ab-label').value = '';
+  document.getElementById('ab-style').value = 'Primary';
+  document.getElementById('ab-showcount').checked = true;
+  document.getElementById('ab-disable-empty').checked = true;
+
+  // Remplir les catégories
+  const data = await fetch(`${API}/api/stock`).then(r => r.json());
+  const sel = document.getElementById('ab-category');
+  sel.innerHTML = '<option value="">-- Choisir --</option>' + Object.keys(data).map(c => `<option value="${c}">${c} (${data[c].length})</option>`).join('');
+
+  updateBtnPreview();
+  document.getElementById('modal-add-btn').classList.add('open');
+}
+
+function updateBtnPreview() {
+  const emoji = document.getElementById('ab-emoji')?.value || '';
+  const label = document.getElementById('ab-label')?.value || 'Bouton';
+  const style = document.getElementById('ab-style')?.value || 'Primary';
+  const showCount = document.getElementById('ab-showcount')?.checked;
+  const p = document.getElementById('btn-live-preview');
+  if (!p) return;
+  p.className = `btn-preview ${style}`;
+  p.textContent = `${emoji} ${label}${showCount ? ' (42)' : ''}`.trim();
+}
+['ab-emoji','ab-label','ab-style','ab-showcount'].forEach(id => {
+  setTimeout(() => document.getElementById(id)?.addEventListener('input', updateBtnPreview), 100);
+});
+
+async function addButtonToPanel() {
+  const panelName = document.getElementById('ab-panel-name').value;
+  const emoji = document.getElementById('ab-emoji').value.trim();
+  const label = document.getElementById('ab-label').value.trim();
+  const category = document.getElementById('ab-category').value;
+  const style = document.getElementById('ab-style').value;
+  const showCount = document.getElementById('ab-showcount').checked;
+  const disableWhenEmpty = document.getElementById('ab-disable-empty').checked;
+
+  if (!label) return toast('Label requis', 'error');
+  if (!category) return toast('Catégorie requise', 'error');
+
+  const panel = currentPanels.find(p => p.name === panelName);
+  if (!panel) return toast('Panel introuvable', 'error');
+  if (!panel.buttons) panel.buttons = [];
+  panel.buttons.push({ emoji, label, category, style, showCount, disableWhenEmpty });
+
+  const res = await fetch(`${API}/api/panels/${panelName}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(panel) });
+  const data = await res.json();
+  if (data.success) { toast(`Bouton "${label}" ajouté !`, 'success'); closeModal('modal-add-btn'); loadPanels(); }
+  else toast(data.error || 'Erreur', 'error');
+}
+
+async function removeBtn(panelName, index) {
+  const panel = currentPanels.find(p => p.name === panelName);
+  if (!panel) return;
+  panel.buttons.splice(index, 1);
+  const res = await fetch(`${API}/api/panels/${panelName}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(panel) });
+  const data = await res.json();
+  if (data.success) { toast('Bouton supprimé', 'success'); loadPanels(); }
+}
+
+// ===== LICENCES =====
+async function loadLicenses() {
+  const licenses = await fetch(`${API}/api/licenses`).then(r => r.json());
+  const tbody = document.getElementById('licenses-tbody');
+  if (!licenses.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Aucune licence</td></tr>'; return; }
+  const now = new Date();
+  tbody.innerHTML = licenses.map(l => {
+    const ok = l.active && (l.expiresAt === null || new Date(l.expiresAt) > now);
+    const exp = l.expiresAt ? new Date(l.expiresAt).toLocaleDateString('fr-FR') : '∞';
+    const vipBadge = l.isVip ? '<span class="badge badge-orange">👑 VIP</span>' : '<span class="badge badge-blue">🆓 Standard</span>';
+    return `<tr>
+      <td><span class="key-mono">${l.key}</span></td>
+      <td><strong>${l.username||'—'}</strong><br><span style="color:var(--muted);font-size:10px;font-family:var(--mono)">${l.userId}</span></td>
+      <td>${vipBadge}</td>
+      <td>${ok ? '<span class="badge badge-green">✅ Active</span>' : '<span class="badge badge-red">❌ Inactive</span>'}</td>
+      <td>${exp}</td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${l.active ? `<button class="btn btn-danger btn-xs" onclick="toggleLicense('${l.key}',false)">🔒</button>` : `<button class="btn btn-success btn-xs" onclick="toggleLicense('${l.key}',true)">✅</button>`}
+        <button class="btn ${l.isVip?'btn-secondary':'btn-warning'} btn-xs" onclick="toggleVip('${l.key}',${!l.isVip})">${l.isVip?'⬇️ Retirer VIP':'👑 Passer VIP'}</button>
+        <button class="btn btn-secondary btn-xs" onclick="deleteLicense('${l.key}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+async function createLicense() {
+  const userId = document.getElementById('new-lic-userid').value.trim();
+  const username = document.getElementById('new-lic-username').value.trim();
+  const days = parseInt(document.getElementById('new-lic-days').value) || 0;
+  const isVip = document.getElementById('new-lic-vip').checked;
+  if (!userId) return toast('User ID requis', 'error');
+  const res = await fetch(`${API}/api/licenses`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId, username, days, isVip }) });
+  const data = await res.json();
+  if (data.success) {
+    toast(`✅ Licence ${isVip?'VIP':'Standard'} créée !`, 'success');
+    document.getElementById('new-key-display').textContent = `🔑 ${data.key}`;
+    document.getElementById('new-lic-userid').value='';
+    document.getElementById('new-lic-username').value='';
+    document.getElementById('new-lic-days').value='';
+    document.getElementById('new-lic-vip').checked=false;
+    loadLicenses();
+  } else toast(data.error, 'error');
+}
+async function toggleVip(key, isVip) {
+  await fetch(`${API}/api/licenses/${key}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ isVip }) });
+  toast(isVip ? '👑 Passé en VIP' : '⬇️ VIP retiré', 'info'); loadLicenses();
+}
+async function toggleLicense(key, active) {
+  await fetch(`${API}/api/licenses/${key}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active }) });
+  toast(active ? '✅ Activée' : '🔒 Révoquée', active?'success':'error'); loadLicenses();
+}
+async function deleteLicense(key) {
+  if (!confirm('Supprimer cette licence ?')) return;
+  await fetch(`${API}/api/licenses/${key}`, { method:'DELETE' });
+  toast('Supprimée', 'success'); loadLicenses();
+}
+
+// ===== CONFIG =====
+async function loadConfig() {
+  const data = await fetch(`${API}/api/config`).then(r => r.json()).catch(() => ({}));
+  document.getElementById('stock-channel-id').value = data.stockChannelId || '';
+}
+async function saveConfig() {
+  const stockChannelId = document.getElementById('stock-channel-id').value.trim();
+  const res = await fetch(`${API}/api/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ stockChannelId }) });
+  const data = await res.json();
+  if (data.success) toast('✅ Sauvegardé !', 'success');
+}
+
+// ===== TOAST =====
+function toast(msg, type='info') {
+  const c = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ===== INIT =====
+(async () => {
+  const res = await fetch(`${API}/api/me`).then(r => r.json()).catch(() => ({ authenticated: false }));
+  if (res.authenticated) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  }
+})();
+</script>
+</body>
+</html>
